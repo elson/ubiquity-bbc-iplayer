@@ -1,5 +1,20 @@
 
 // Subscribe to these commands at http://github.com/elson/ubiquity-bbc-iplayer/wikis/home
+// Usage: watch (programme)
+
+// CONSTANTS
+// ######################################################
+
+const PROG_FEEDS = [
+  "http://www.bbc.co.uk/bbcone/programmes/schedules/london/today.json",
+  "http://www.bbc.co.uk/bbcone/programmes/schedules/london/yesterday.json",
+  "http://www.bbc.co.uk/bbctwo/programmes/schedules/england/today.json",
+  "http://www.bbc.co.uk/bbctwo/programmes/schedules/england/yesterday.json",
+  "http://www.bbc.co.uk/bbcthree/programmes/schedules/today.json",
+  "http://www.bbc.co.uk/bbcthree/programmes/schedules/yesterday.json",
+  "http://www.bbc.co.uk/bbcfour/programmes/schedules/today.json",
+  "http://www.bbc.co.uk/bbcfour/programmes/schedules/yesterday.json"
+];
 
 // NOUN_TYPES
 // ######################################################
@@ -12,84 +27,11 @@ var noun_type_channels = new CmdUtils.NounType( "channel",
 // Recent BBC programmes available on iPlayer
 var noun_type_progs = {
   _name: "BBC Programmes",
-  responses: 0,
-  downloading: false,
-  list: [],
-  feeds: [
-    "http://www.bbc.co.uk/bbcone/programmes/schedules/london/today.json",
-    "http://www.bbc.co.uk/bbcone/programmes/schedules/london/yesterday.json",
-    "http://www.bbc.co.uk/bbctwo/programmes/schedules/england/today.json",
-    "http://www.bbc.co.uk/bbctwo/programmes/schedules/england/yesterday.json",
-    "http://www.bbc.co.uk/bbcthree/programmes/schedules/today.json",
-    "http://www.bbc.co.uk/bbcthree/programmes/schedules/yesterday.json",
-    "http://www.bbc.co.uk/bbcfour/programmes/schedules/today.json",
-    "http://www.bbc.co.uk/bbcfour/programmes/schedules/yesterday.json"
-  ],
-
-  getProgs: function (){
-    var np = noun_type_progs;
-
-    if (np.downloading) return;
-
-    np.downloading = true;
-    np.feeds.forEach( function( feed ) {
-      getFeed( feed, np.callback );
+  suggest: function( text, html, callback ) {
+    getProgs( PROG_FEEDS, text, function( prog ) {
+      callback( CmdUtils.makeSugg( prog.title, prog.title, prog ) );
     });
-  },
-
-  callback: function ( response ) {
-    var np = noun_type_progs;
-    var broadcasts = response.schedule.day.broadcasts;
-    var service = response.schedule.service;
-
-    broadcasts.forEach( function( broadcast ) {
-      if (broadcast.programme.media){
-        np.list.push( np.simplify( broadcast, service ) );
-      }
-    });
-
-    if ( np.responses++ === np.feeds.length ) {
-      np.downloading = false;
-    }
-  },
-
-  simplify: function ( broadcast, service ) {
-    return {
-      "pid": broadcast.programme.pid,
-      "start": getW3Date(broadcast.start),
-      "end": getW3Date(broadcast.end),
-      "title": broadcast.programme.display_titles.title,
-      "subtitle": broadcast.programme.display_titles.subtitle,
-      "synopsis": broadcast.programme.short_synopsis,
-      "availability": broadcast.programme.media.availability.
-        substr(0, broadcast.programme.media.availability.indexOf(" to")),
-      "url": "http://www.bbc.co.uk/iplayer/episode/" + broadcast.programme.pid,
-      "playlist": "http://www.bbc.co.uk/iplayer/playlist/"  + broadcast.programme.pid,
-      "holdingimg": "http://www.bbc.co.uk/iplayer/images/episode/" + broadcast.programme.pid + "_512_288.jpg",
-      "service": service.key,
-      "channel": service.title,
-      "servicenum": service.key.substr(3)
-    };
-  },
-
-  suggest: function( text ) {
-    var np = noun_type_progs;
-    var suggestions = [];
-
-    if ( np.responses !== np.feeds.length ) {
-      np.getProgs();
-      return suggestions;
-    }
-
-    if ( text.length < 3 ) return suggestions;
-
-    np.list.forEach( function( prog ) {
-      if ( prog.title.match(text, "i") ) {
-        suggestions.push( CmdUtils.makeSugg(prog.title, prog.title, prog) );
-      }
-    });
-
-    return suggestions;
+    return [];
   }
 };
 
@@ -117,8 +59,8 @@ CmdUtils.CreateCommand({
       var msg = '<img src="http://www.bbc.co.uk/ui/ide/1/images/brand/50/' + 
         'bbc_${servicenum}.gif" width="50" height="36" /><br /> ' + 
         (prog.data.subtitle ? '${subtitle}:<br />' : '') +
-        '${synopsis} (${availability})<br />' + 
-        '<img src="${holdingimg}" width="512" height="288" />' ;
+        '${synopsis} (${remaining})<br />' + 
+        '<img src="${image}" width="512" height="288" />' ;
 
       pblock.innerHTML = CmdUtils.renderTemplate( msg, prog.data ); 
     }
@@ -133,6 +75,51 @@ CmdUtils.CreateCommand({
 
 // UTILITIES
 // ######################################################
+
+function getProgs( feeds, query, callback){
+  feeds.forEach( function( feed ) {
+    jQuery.ajax( {
+      url: feed,
+      dataType: "json",
+      success: function( json ){
+        service = json.schedule.service;
+        json.schedule.day.broadcasts.forEach( function( broadcast ) {
+          prog = flattenProg( broadcast, service );
+          if ( prog && prog.title.match(query, "i") ) {
+              callback(prog);
+          }
+        });
+      },
+      error: function() {
+        displayMessage("Problem loading data");
+      }
+    });
+  });
+}
+
+function flattenProg( broadcast, service ) {
+
+  if (!broadcast.programme.media) 
+    return null;
+  
+  return {
+    "pid": broadcast.programme.pid,
+    "start": getW3Date(broadcast.start),
+    "end": getW3Date(broadcast.end),
+    "title": broadcast.programme.display_titles.title,
+    "subtitle": broadcast.programme.display_titles.subtitle,
+    "synopsis": broadcast.programme.short_synopsis,
+    "available": true,
+    "remaining": broadcast.programme.media.availability.
+      substr(0, broadcast.programme.media.availability.indexOf(" to")),
+    "url": "http://www.bbc.co.uk/iplayer/episode/" + broadcast.programme.pid,
+    "playlist": "http://www.bbc.co.uk/iplayer/playlist/"  + broadcast.programme.pid,
+    "image": "http://www.bbc.co.uk/iplayer/images/episode/" + broadcast.programme.pid + "_512_288.jpg",
+    "service": service.key,
+    "channel": service.title,
+    "servicenum": service.key.substr(3)
+  };
+}
 
 // getW3Date modified from http://delete.me.uk/2005/03/iso8601.html
 function getW3Date (string) {
