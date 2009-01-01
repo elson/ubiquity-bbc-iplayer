@@ -151,7 +151,7 @@ CmdUtils.CreateCommand({
 	icon: "http://www.bbc.co.uk/favicon.ico",
 	author: {name: "Stephen Elson", email: "stephen.elson@gmail.com"},
 	license: "MPL",
-	description: "Search for recent BBC programmes on iPlayer, with preview image",
+	description: "Search for recent programmes on BBC iPlayer",
     takes: {"programme": noun_type_progs},
     
     preview: function( pblock, prog ) {
