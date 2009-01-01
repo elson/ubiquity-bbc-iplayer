@@ -13,7 +13,9 @@ const PROG_FEEDS = [
   "http://www.bbc.co.uk/bbcthree/programmes/schedules/today.json",
   "http://www.bbc.co.uk/bbcthree/programmes/schedules/yesterday.json",
   "http://www.bbc.co.uk/bbcfour/programmes/schedules/today.json",
-  "http://www.bbc.co.uk/bbcfour/programmes/schedules/yesterday.json"
+  "http://www.bbc.co.uk/bbcfour/programmes/schedules/yesterday.json",
+  "http://www.bbc.co.uk/bbchd/programmes/schedules/today.json",
+  "http://www.bbc.co.uk/bbchd/programmes/schedules/yesterday.json"
 ];
 
 // NOUN_TYPES
@@ -57,10 +59,10 @@ CmdUtils.CreateCommand({
     pblock.innerHTML = "Watch a recent programme on BBC iPlayer";
     if (prog && prog.data) {
       var msg = '<img src="http://www.bbc.co.uk/ui/ide/1/images/brand/50/' + 
-        'bbc_${servicenum}.gif" width="50" height="36" /><br /> ' + 
+        'bbc_${servicenum}.gif" /><br /> ' + 
         (prog.data.subtitle ? '${subtitle}:<br />' : '') +
         '${synopsis} (${remaining})<br />' + 
-        '<img src="${image}" width="512" height="288" />' ;
+        '<img src="${image}" width="512" height="288" />';
 
       pblock.innerHTML = CmdUtils.renderTemplate( msg, prog.data ); 
     }
