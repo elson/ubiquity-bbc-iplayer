@@ -1,4 +1,5 @@
 
+// Subscribe to these commands at http://github.com/elson/ubiquity-bbc-iplayer/wikis/home
 
 // NOUN_TYPES
 // ######################################################
@@ -8,7 +9,7 @@ var noun_type_channels = new CmdUtils.NounType( "channel",
   ["bbcone", "bbctwo", "bbcthree", "bbcfour"]
 );
 
-// Recent BBC One shows on iPlayer
+// Recent BBC programmes available on iPlayer
 var noun_type_progs = {
     _name: "BBC Programmes",
     responses: 0,
