@@ -1,6 +1,7 @@
 
 /*
  TODO: 
+ 	update noun_type_prog to use async support in 0.1.3
 	add more prog metadata
 	better layout in preview
 	embed small player into preview?
@@ -166,7 +167,7 @@ CmdUtils.CreateCommand({
             
             pblock.innerHTML = CmdUtils.renderTemplate( msg, prog.data );
         }
-    },
+    }, 
     
     execute: function( prog ) {
         Utils.openUrlInBrowser(prog.data.url);
