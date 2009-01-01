@@ -1,48 +1,4 @@
 
-/*
- TODO: 
- 	update noun_type_prog to use async support in 0.1.3
-	add more prog metadata
-	better layout in preview
-	embed small player into preview?
-	watch live streaming
-	upcoming shows
-*/
-
-
-// UTILITIES
-// ######################################################
-
-// getW3Date modified from http://delete.me.uk/2005/03/iso8601.html
-function getW3Date (string) {
-    var regexp = "([0-9]{4})(-([0-9]{2})(-([0-9]{2})" +
-        "(T([0-9]{2}):([0-9]{2})(:([0-9]{2})(\.([0-9]+))?)?" +
-        "(Z|(([-+])([0-9]{2}):([0-9]{2})))?)?)?)?";
-    var d = string.match(new RegExp(regexp));
-    var date = new Date(d[1], 0, 1);
-
-    if (d[3]) { date.setMonth(d[3] - 1); }
-    if (d[5]) { date.setDate(d[5]); }
-    if (d[7]) { date.setHours(d[7]); }
-    if (d[8]) { date.setMinutes(d[8]); }
-    if (d[10]) { date.setSeconds(d[10]); }
-    if (d[12]) { date.setMilliseconds(Number("0." + d[12]) * 1000); }
-
-    return date;
-}
-
-function getFeed ( feed, callback ) {
-    jQuery.ajax( {
-        url: feed,
-        dataType: "json",
-        success: callback,
-        error: function() {
-            displayMessage("Sorry, feed unavailable");
-        }
-    });
-}
-
-
 
 // NOUN_TYPES
 // ######################################################
@@ -157,15 +113,15 @@ CmdUtils.CreateCommand({
     preview: function( pblock, prog ) {
         if (!pblock) return;
         
-        pblock.innerHTML = "Watch a recent programme on BBC iPlayer";
+        pblock.innerHTML = "Watch a recent programme on BBC iPlayer!";
         if (prog && prog.data) {
-        	var msg = '<img src="http://www.bbc.co.uk/ui/ide/1/images/brand/50/' + 
-        		'bbc_${servicenum}.gif" width="50" height="36" /><br /> ' + 
-        		(prog.data.subtitle ? '${subtitle}:<br />' : '') +
-        		'${synopsis} (${availability})<br />' + 
-        		'<img src="${holdingimg}" width="512" height="288" />' ;
+         var msg = '<img src="http://www.bbc.co.uk/ui/ide/1/images/brand/50/' + 
+          'bbc_${servicenum}.gif" width="50" height="36" /><br /> ' + 
+          (prog.data.subtitle ? '${subtitle}:<br />' : '') +
+          '${synopsis} (${availability})<br />' + 
+          '<img src="${holdingimg}" width="512" height="288" />' ;
             
-            pblock.innerHTML = CmdUtils.renderTemplate( msg, prog.data );
+            pblock.innerHTML = CmdUtils.renderTemplate( msg, prog.data ); 
         }
     }, 
     
@@ -173,5 +129,39 @@ CmdUtils.CreateCommand({
         Utils.openUrlInBrowser(prog.data.url);
     }
 });
+
+
+
+// UTILITIES
+// ######################################################
+
+// getW3Date modified from http://delete.me.uk/2005/03/iso8601.html
+function getW3Date (string) {
+    var regexp = "([0-9]{4})(-([0-9]{2})(-([0-9]{2})" +
+        "(T([0-9]{2}):([0-9]{2})(:([0-9]{2})(\.([0-9]+))?)?" +
+        "(Z|(([-+])([0-9]{2}):([0-9]{2})))?)?)?)?";
+    var d = string.match(new RegExp(regexp));
+    var date = new Date(d[1], 0, 1);
+
+    if (d[3]) { date.setMonth(d[3] - 1); }
+    if (d[5]) { date.setDate(d[5]); }
+    if (d[7]) { date.setHours(d[7]); }
+    if (d[8]) { date.setMinutes(d[8]); }
+    if (d[10]) { date.setSeconds(d[10]); }
+    if (d[12]) { date.setMilliseconds(Number("0." + d[12]) * 1000); }
+
+    return date;
+}
+
+function getFeed ( feed, callback ) {
+    jQuery.ajax( {
+        url: feed,
+        dataType: "json",
+        success: callback,
+        error: function() {
+            displayMessage("Sorry, feed unavailable");
+        }
+    });
+}
 
 
