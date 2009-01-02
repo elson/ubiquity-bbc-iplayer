@@ -3,7 +3,7 @@
 // Usage: watch (programme)
 
 // VARIABLES
-// ######################################################
+// ######################################################wi
 
 var TV_PROG_FEEDS = [
   "http://www.bbc.co.uk/bbcone/programmes/schedules/london/today.json",
@@ -48,7 +48,7 @@ var noun_type_progs = {
 CmdUtils.CreateCommand({
   name: "watch",
   description: "Search for recent programmes on BBC iPlayer",
-  homepage: "http://github.com/elson/ubiquity-bbc-iplayer/wikis",
+  homepage: "http://github.com/elson/ubiquity-bbc-iplayer/wikis/home",
   author: { name: "Stephen Elson", email: "stephen.elson@gmail.com" },
   icon: "http://www.bbc.co.uk/favicon.ico",
   license: "MPL",
