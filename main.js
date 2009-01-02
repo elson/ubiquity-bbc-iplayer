@@ -47,10 +47,11 @@ var noun_type_progs = {
 
 CmdUtils.CreateCommand({
   name: "watch",
-  icon: "http://www.bbc.co.uk/favicon.ico",
-  author: { name: "Stephen Elson", email: "stephen.elson@gmail.com" },
-  license: "MPL",
   description: "Search for recent programmes on BBC iPlayer",
+  homepage: "http://github.com/elson/ubiquity-bbc-iplayer/wikis",
+  author: { name: "Stephen Elson", email: "stephen.elson@gmail.com" },
+  icon: "http://www.bbc.co.uk/favicon.ico",
+  license: "MPL",
   
   takes: {"programme": noun_type_progs},
 
