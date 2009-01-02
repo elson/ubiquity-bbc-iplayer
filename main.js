@@ -1,5 +1,5 @@
 
-// Subscribe to these commands at http://github.com/elson/ubiquity-bbc-iplayer/wikis/home
+// Subscribe to these commands at http://github.com/elson/ubiquity-bbc-iplayer/wikis
 // Usage: watch (programme)
 
 // CONSTANTS
