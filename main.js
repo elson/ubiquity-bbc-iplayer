@@ -1,11 +1,11 @@
 
-// Subscribe to these commands at http://github.com/elson/ubiquity-bbc-iplayer/wikis
+// Subscribe to these commands at http://github.com/elson/ubiquity-bbc-iplayer/wikis/home
 // Usage: watch (programme)
 
-// CONSTANTS
+// VARIABLES
 // ######################################################
 
-const TV_PROG_FEEDS = [
+var TV_PROG_FEEDS = [
   "http://www.bbc.co.uk/bbcone/programmes/schedules/london/today.json",
   "http://www.bbc.co.uk/bbcone/programmes/schedules/london/yesterday.json",
   "http://www.bbc.co.uk/bbctwo/programmes/schedules/england/today.json",
