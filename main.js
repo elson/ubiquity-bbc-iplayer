@@ -1,5 +1,5 @@
 
-// Subscribe to these commands at http://github.com/elson/ubiquity-bbc-iplayer/wikis/home
+// Subscribe to these commands at http://github.com/elson/ubiquity-bbc-iplayer/wikis/command-feed
 // Usage: 
 //    watch (tv programme)
 //    listen (radio programme)
