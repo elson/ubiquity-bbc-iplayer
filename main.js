@@ -1,6 +1,9 @@
 
 // Subscribe to these commands at http://github.com/elson/ubiquity-bbc-iplayer/wikis/home
-// Usage: watch (programme)
+// Usage: 
+//    watch (tv programme)
+//    listen (radio programme)
+
 
 // VARIABLES
 // ######################################################wi
@@ -18,18 +21,31 @@ var TV_PROG_FEEDS = [
   "http://www.bbc.co.uk/bbchd/programmes/schedules/yesterday.json"
 ];
 
+var RADIO_PROG_FEEDS = [
+  "http://www.bbc.co.uk/radio1/programmes/schedules/today.json",
+  "http://www.bbc.co.uk/radio1/programmes/schedules/yesterday.json",
+  "http://www.bbc.co.uk/radio2/programmes/schedules/today.json",
+  "http://www.bbc.co.uk/radio2/programmes/schedules/yesterday.json",
+  "http://www.bbc.co.uk/radio3/programmes/schedules/today.json",
+  "http://www.bbc.co.uk/radio3/programmes/schedules/yesterday.json",
+  "http://www.bbc.co.uk/radio4/programmes/schedules/today.json",
+  "http://www.bbc.co.uk/radio4/programmes/schedules/yesterday.json",
+  "http://www.bbc.co.uk/radio7/programmes/schedules/today.json",
+  "http://www.bbc.co.uk/radio7/programmes/schedules/yesterday.json"
+];
+
 // NOUN_TYPES
 // ######################################################
 
 // BBC TV channels
-var noun_type_channels = new CmdUtils.NounType( "channel",
+var noun_type_tv_channels = new CmdUtils.NounType( "channel",
   ["bbcone", "bbctwo", "bbcthree", "bbcfour"]
 );
 
 
-// Recent BBC programmes available on iPlayer
-var noun_type_progs = {
-  _name: "BBC Programmes",
+// Recent BBC TV programmes available on iPlayer
+var noun_type_tv_progs = {
+  _name: "BBC TV Programmes",
   suggest: function( text, html, callback ) {
     getProgs( TV_PROG_FEEDS, text, function( prog ) {
       callback( CmdUtils.makeSugg( prog.title, prog.title, prog ) );
@@ -39,6 +55,17 @@ var noun_type_progs = {
 };
 
 
+// Recent BBC Radio programmes available on iPlayer
+var noun_type_radio_progs = {
+  _name: "BBC Radio Programmes",
+  suggest: function( text, html, callback ) {
+    getProgs( RADIO_PROG_FEEDS, text, function( prog ) {
+      callback( CmdUtils.makeSugg( prog.title, prog.title, prog ) );
+    });
+    return [];
+  }
+};
+
 // COMMANDS
 // ######################################################
 
@@ -47,18 +74,18 @@ var noun_type_progs = {
 
 CmdUtils.CreateCommand({
   name: "watch",
-  description: "Search for recent programmes on BBC iPlayer",
+  description: "Search for recent television programmes on BBC iPlayer",
   homepage: "http://github.com/elson/ubiquity-bbc-iplayer/wikis/home",
   author: { name: "Stephen Elson", email: "stephen.elson@gmail.com" },
   icon: "http://www.bbc.co.uk/favicon.ico",
   license: "MPL",
   
-  takes: {"programme": noun_type_progs},
+  takes: { "tv programme": noun_type_tv_progs },
 
   preview: function( pblock, prog ) {
     if (!pblock) return;
 
-    pblock.innerHTML = "Watch a recent programme on BBC iPlayer";
+    pblock.innerHTML = "Watch a recent TV programme on BBC iPlayer";
     
     if (prog && prog.data) {
       var msg = '<img src="http://www.bbc.co.uk/ui/ide/1/images/brand/50/' + 
@@ -76,6 +103,37 @@ CmdUtils.CreateCommand({
   }
 });
 
+
+CmdUtils.CreateCommand({
+  name: "listen",
+  description: "Search for recent Radio programmes on BBC iPlayer",
+  homepage: "http://github.com/elson/ubiquity-bbc-iplayer/wikis/home",
+  author: { name: "Stephen Elson", email: "stephen.elson@gmail.com" },
+  icon: "http://www.bbc.co.uk/favicon.ico",
+  license: "MPL",
+  
+  takes: { "radio programme": noun_type_radio_progs },
+
+  preview: function( pblock, prog ) {
+    if (!pblock) return;
+
+    pblock.innerHTML = "Listen to a recent Radio programme on BBC iPlayer";
+    
+    if (prog && prog.data) {
+      var msg = '<img src="http://www.bbc.co.uk/ui/ide/1/images/brand/50/' + 
+        'radio_${servicenum}.gif" /><br /> ' + 
+        (prog.data.subtitle ? '${subtitle}:<br />' : '') +
+        '${synopsis} (${remaining})<br />' + 
+        '<img src="${image}" width="512" height="288" />';
+
+      pblock.innerHTML = CmdUtils.renderTemplate( msg, prog.data ); 
+    }
+  },
+
+  execute: function( prog ) {
+    Utils.openUrlInBrowser(prog.data.url);
+  }
+});
 
 // UTILITIES
 // ######################################################
@@ -96,7 +154,7 @@ function getProgs( feeds, query, callback){
           matchProgs( json, query, callback );
         },
         error: function() {
-          displayMessage("Problem loading data");
+          //CmdUtils.log("Problem loading: " + feed);
         }
       });
     }
@@ -131,9 +189,10 @@ function flattenProg( broadcast, service ) {
     "url": "http://www.bbc.co.uk/iplayer/episode/" + broadcast.programme.pid,
     "playlist": "http://www.bbc.co.uk/iplayer/playlist/"  + broadcast.programme.pid,
     "image": "http://www.bbc.co.uk/iplayer/images/episode/" + broadcast.programme.pid + "_512_288.jpg",
+    "type": service.type,
     "service": service.key,
     "channel": service.title,
-    "servicenum": service.key.substr(3)
+    "servicenum": (service.type == 'tv') ? service.key.substr(3) : service.key.substr(5)
   };
 }
 
