@@ -5,38 +5,26 @@
 //    listen (radio programme)
 
 
-// VARIABLES
+// CONSTANTS
 // ######################################################
 
-const TV_PROG_FEEDS = [
-  "http://www.bbc.co.uk/bbcone/programmes/schedules/london/today.json",
-  "http://www.bbc.co.uk/bbcone/programmes/schedules/london/yesterday.json",
-  "http://www.bbc.co.uk/bbctwo/programmes/schedules/england/today.json",
-  "http://www.bbc.co.uk/bbctwo/programmes/schedules/england/yesterday.json",
-  "http://www.bbc.co.uk/bbcthree/programmes/schedules/today.json",
-  "http://www.bbc.co.uk/bbcthree/programmes/schedules/yesterday.json",
-  "http://www.bbc.co.uk/bbcfour/programmes/schedules/today.json",
-  "http://www.bbc.co.uk/bbcfour/programmes/schedules/yesterday.json",
-  "http://www.bbc.co.uk/bbcnews/programmes/schedules/today.json",
-  "http://www.bbc.co.uk/bbcnews/programmes/schedules/yesterday.json",
-  "http://www.bbc.co.uk/cbbc/programmes/schedules/today.json",
-  "http://www.bbc.co.uk/cbbc/programmes/schedules/yesterday.json",
-  "http://www.bbc.co.uk/cbeebies/programmes/schedules/today.json",
-  "http://www.bbc.co.uk/cbeebies/programmes/schedules/yesterday.json"
-];
+const TV_PROG_FEEDS = iPlayerFeeds ([
+  { service: "bbcone", outlet: "london" },
+  { service: "bbctwo", outlet: "england" },
+  { service: "bbcthree" },
+  { service: "bbcfour" },
+  { service: "bbcnews" },
+  { service: "cbbc" },
+  { service: "cbeebies" }
+]);
 
-const RADIO_PROG_FEEDS = [
-  "http://www.bbc.co.uk/radio1/programmes/schedules/today.json",
-  "http://www.bbc.co.uk/radio1/programmes/schedules/yesterday.json",
-  "http://www.bbc.co.uk/radio2/programmes/schedules/today.json",
-  "http://www.bbc.co.uk/radio2/programmes/schedules/yesterday.json",
-  "http://www.bbc.co.uk/radio3/programmes/schedules/today.json",
-  "http://www.bbc.co.uk/radio3/programmes/schedules/yesterday.json",
-  "http://www.bbc.co.uk/radio4/programmes/schedules/fm/today.json",
-  "http://www.bbc.co.uk/radio4/programmes/schedules/fm/yesterday.json",
-  "http://www.bbc.co.uk/radio7/programmes/schedules/today.json",
-  "http://www.bbc.co.uk/radio7/programmes/schedules/yesterday.json"
-];
+const RADIO_PROG_FEEDS = iPlayerFeeds ([
+  { service: "radio1" },
+  { service: "radio2" },
+  { service: "radio3" },
+  { service: "radio4", outlet: "fm" },
+  { service: "radio7" }
+]);
 
 const STATION_ICONS = {
   bbcone: "bbc_one.png",
@@ -84,95 +72,97 @@ const PREVIEW_TMPL = '\
 // NOUN_TYPES
 // ######################################################
 
-// BBC TV stations
-var noun_type_tv_stations = new CmdUtils.NounType( "station",
-  ["bbcone", "bbctwo", "bbcthree", "bbcfour"]
-);
-
-
 // Recent BBC TV programmes available on iPlayer
-var noun_type_tv_progs = {
-  _name: "BBC TV Programmes",
-  suggest: function( text, html, callback ) {
-    getProgs( TV_PROG_FEEDS, text, function( broadcast, title ) {
-      callback( CmdUtils.makeSugg( title, title, broadcast ) );
-    });
-    return [];
-  }
-};
-
+var noun_type_tv_progs = iPlayerNounType( "BBC TV Programmes", TV_PROG_FEEDS );
 
 // Recent BBC Radio programmes available on iPlayer
-var noun_type_radio_progs = {
-  _name: "BBC Radio Programmes",
-  suggest: function( text, html, callback ) {
-    getProgs( RADIO_PROG_FEEDS, text, function( broadcast, title ) {
-      callback( CmdUtils.makeSugg( title, title, broadcast ) );
-    });
-    return [];
-  }
-};
+var noun_type_radio_progs = iPlayerNounType( "BBC Radio Programmes", RADIO_PROG_FEEDS );
 
 
 // COMMANDS
 // ######################################################
 
-CmdUtils.CreateCommand({
-  name: "watch",
-  description: "Search for recent television programmes on BBC iPlayer",
-  homepage: "http://github.com/elson/ubiquity-bbc-iplayer/wikis/home",
-  author: { name: "Stephen Elson", email: "stephen.elson@gmail.com" },
-  icon: "http://www.bbc.co.uk/favicon.ico",
-  license: "MIT",
-  
-  takes: { "tv programme": noun_type_tv_progs },
-
-  preview: function( pblock, item ) {
-    if (!pblock) return;
-
-    pblock.innerHTML = "Watch a recent TV programme on BBC iPlayer";
-    
-    if (item && item.data) {
-      var broadcast = item.data;
-      broadcast._service.img = STATION_ICONS[broadcast._service.key];
-      broadcast._shown = formatDate(broadcast.start);
-      pblock.innerHTML = CmdUtils.renderTemplate( PREVIEW_TMPL, broadcast ); 
-    }
-  },
-
-  execute: function( item ) {
-    Utils.openUrlInBrowser("http://www.bbc.co.uk/iplayer/episode/" + item.data.programme.pid);
-  }
+// Watch BBC TV programmes
+iPlayerCommand( 
+  "watch", 
+  "Watch a recent TV programme on BBC iPlayer", {
+  "tv programme": noun_type_tv_progs
 });
 
 
-CmdUtils.CreateCommand({
-  name: "listen",
-  description: "Search for recent Radio programmes on BBC iPlayer",
-  homepage: "http://github.com/elson/ubiquity-bbc-iplayer/wikis/home",
-  author: { name: "Stephen Elson", email: "stephen.elson@gmail.com" },
-  icon: "http://www.bbc.co.uk/favicon.ico",
-  license: "MIT",
-  
-  takes: { "radio programme": noun_type_radio_progs },
-
-  preview: function( pblock, item ) {
-    if (!pblock) return;
-
-    pblock.innerHTML = "Listen to a recent Radio programme on BBC iPlayer";
-    
-    if (item && item.data) {
-      var broadcast = item.data;
-      broadcast._service.img = STATION_ICONS[broadcast._service.key];
-      broadcast._shown = formatDate(broadcast.start);
-      pblock.innerHTML = CmdUtils.renderTemplate( PREVIEW_TMPL, broadcast );
-    }
-  },
-
-  execute: function( item ) {
-    Utils.openUrlInBrowser("http://www.bbc.co.uk/iplayer/episode/" + item.data.programme.pid);
-  }
+// Listen to BBC Radio programmes
+iPlayerCommand( 
+  "listen", 
+  "Listen to a recent Radio programme on BBC iPlayer", {
+  "radio programme": noun_type_radio_progs
 });
+
+
+// FACTORIES
+// ######################################################
+
+// Creates BBC TV & Radio programme noun_types from feeds
+function iPlayerNounType ( name, feeds ) {
+
+  var slowly = new Slow();
+  
+  return {
+    _name: name,
+    suggest: function( text, html, callback ) {
+      slowly.please( function() {
+        getProgs( feeds, text, function( broadcast, title ) {
+          callback( CmdUtils.makeSugg( title, title, broadcast ) );
+        });
+      });
+      return [];
+    }
+  };
+}
+
+// Creates commands using programme noun_types
+function iPlayerCommand ( name, description, takes ) {
+
+  CmdUtils.CreateCommand({
+    name: name,
+    description: description,
+    homepage: "http://github.com/elson/ubiquity-bbc-iplayer/wikis/home",
+    author: { name: "Stephen Elson", email: "stephen.elson@gmail.com" },
+    icon: "http://www.bbc.co.uk/favicon.ico",
+    license: "MIT",
+    takes: takes,
+    
+    preview: function( pblock, item ) {
+      if (!pblock) return;
+
+      pblock.innerHTML = description;
+      if (item && item.data) {
+        var broadcast = item.data;
+        broadcast._service.img = STATION_ICONS[broadcast._service.key];
+        broadcast._shown = formatDate(broadcast.start);
+        pblock.innerHTML = CmdUtils.renderTemplate( PREVIEW_TMPL, broadcast );
+      }
+    },
+    
+    execute: function( item ) {
+      Utils.openUrlInBrowser("http://www.bbc.co.uk/iplayer/episode/" + item.data.programme.pid);
+    }
+  });
+};
+
+// Returns array of feed URLs for BBC TV & Radio stations 
+function iPlayerFeeds ( config ) {
+  
+  var feeds = [], base;
+  
+  config.forEach( function( item ){
+    base = "http://www.bbc.co.uk/" + item.service +
+      "/programmes/schedules/" + (item.outlet ? item.outlet + "/" : "");
+    feeds.push( base + "today.json" );
+    feeds.push( base + "yesterday.json" );
+  });
+  
+  return feeds;
+}
 
 // UTILITIES
 // ######################################################
@@ -209,6 +199,25 @@ function matchProgs( json, query, callback ) {
         callback(broadcast, broadcast.programme.display_titles.title);
     }
   });
+}
+
+
+// Used by noun_types to prevent too many http requests
+// Based loosely on Gray Nortons Freebase
+// http://graynorton.com/ubiquity/freebase-nouns.html
+function Slow ( delay ) {
+  var timer = null;
+  
+  if ( !delay ) { delay = 400; }
+  
+  this.please = function ( fn ) {
+    if (timer) Utils.clearTimeout( timer );
+        
+    timer = Utils.setTimeout ( function() {
+      timer = null;
+      fn();
+    }, delay );
+  }
 }
 
 
