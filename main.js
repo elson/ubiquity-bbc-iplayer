@@ -17,8 +17,12 @@ var TV_PROG_FEEDS = [
   "http://www.bbc.co.uk/bbcthree/programmes/schedules/yesterday.json",
   "http://www.bbc.co.uk/bbcfour/programmes/schedules/today.json",
   "http://www.bbc.co.uk/bbcfour/programmes/schedules/yesterday.json",
-  "http://www.bbc.co.uk/bbchd/programmes/schedules/today.json",
-  "http://www.bbc.co.uk/bbchd/programmes/schedules/yesterday.json"
+  "http://www.bbc.co.uk/bbcnews/programmes/schedules/today.json",
+  "http://www.bbc.co.uk/bbcnews/programmes/schedules/yesterday.json",
+  "http://www.bbc.co.uk/cbbc/programmes/schedules/today.json",
+  "http://www.bbc.co.uk/cbbc/programmes/schedules/yesterday.json",
+  "http://www.bbc.co.uk/cbeebies/programmes/schedules/today.json",
+  "http://www.bbc.co.uk/cbeebies/programmes/schedules/yesterday.json"
 ];
 
 var RADIO_PROG_FEEDS = [
@@ -39,6 +43,9 @@ var STATION_ICONS = {
   bbctwo: "bbc_two.png",
   bbcthree: "bbc_three.png",
   bbcfour: "bbc_four.png",
+  bbcnews: "bbc_news24.png",
+  cbbc: "cbbc.png",
+  cbeebies: "cbeebies.png",
   radio1: "bbc_radio_one.png",
   radio2: "bbc_radio_two.png",
   radio3: "bbc_radio_three.png",
