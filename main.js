@@ -28,8 +28,8 @@ var RADIO_PROG_FEEDS = [
   "http://www.bbc.co.uk/radio2/programmes/schedules/yesterday.json",
   "http://www.bbc.co.uk/radio3/programmes/schedules/today.json",
   "http://www.bbc.co.uk/radio3/programmes/schedules/yesterday.json",
-  "http://www.bbc.co.uk/radio4/programmes/schedules/today.json",
-  "http://www.bbc.co.uk/radio4/programmes/schedules/yesterday.json",
+  "http://www.bbc.co.uk/radio4/programmes/schedules/fm/today.json",
+  "http://www.bbc.co.uk/radio4/programmes/schedules/fm/yesterday.json",
   "http://www.bbc.co.uk/radio7/programmes/schedules/today.json",
   "http://www.bbc.co.uk/radio7/programmes/schedules/yesterday.json"
 ];
@@ -99,11 +99,11 @@ CmdUtils.CreateCommand({
     
     if (prog && prog.data) {
       var msg = '<img src="http://www.bbc.co.uk/iplayer/img/station_logos/small/' + 
-        '${station_icon}" width="86" height="37" /><br /> ' + 
+        '${station_icon}" alt="${station}" width="86" height="37" /><br /> ' + 
         (prog.data.subtitle ? '${subtitle}:<br />' : '') +
         '${synopsis} (${remaining})<br />' + 
         // avail holding img sizes: 640_360, 512_288, 303_170, 150_84
-        '<img src="${image}" width="512" height="288" />';
+        '<img src="${image}" width="303" height="170" />';
 
       pblock.innerHTML = CmdUtils.renderTemplate( msg, prog.data ); 
     }
@@ -132,10 +132,10 @@ CmdUtils.CreateCommand({
     
     if (prog && prog.data) {
       var msg = '<img src="http://www.bbc.co.uk/iplayer/img/station_logos/small/' + 
-        '${station_icon}" width="86" height="37" /><br /> ' + 
+        '${station_icon}" alt="${station}" width="86" height="37" /><br /> ' + 
         (prog.data.subtitle ? '${subtitle}:<br />' : '') +
         '${synopsis} (${remaining})<br />' + 
-        '<img src="${image}" width="512" height="288" />';
+        '<img src="${image}" width="303" height="170" />';
 
       pblock.innerHTML = CmdUtils.renderTemplate( msg, prog.data ); 
     }
@@ -165,7 +165,7 @@ function getProgs( feeds, query, callback){
           matchProgs( json, query, callback );
         },
         error: function() {
-          //CmdUtils.log("Problem loading: " + feed);
+          CmdUtils.log("Problem loading: " + feed);
         }
       });
     }
@@ -199,7 +199,7 @@ function flattenProg( broadcast, service ) {
       substr(0, broadcast.programme.media.availability.indexOf(" to")),
     "url": "http://www.bbc.co.uk/iplayer/episode/" + broadcast.programme.pid,
     "playlist": "http://www.bbc.co.uk/iplayer/playlist/"  + broadcast.programme.pid,
-    "image": "http://www.bbc.co.uk/iplayer/images/episode/" + broadcast.programme.pid + "_512_288.jpg",
+    "image": "http://www.bbc.co.uk/iplayer/images/episode/" + broadcast.programme.pid + "_303_170.jpg",
     "type": service.type,
     "station": service.title,
     "station_id": service.key,
