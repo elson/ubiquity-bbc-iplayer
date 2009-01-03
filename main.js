@@ -6,9 +6,9 @@
 
 
 // VARIABLES
-// ######################################################wi
+// ######################################################
 
-var TV_PROG_FEEDS = [
+const TV_PROG_FEEDS = [
   "http://www.bbc.co.uk/bbcone/programmes/schedules/london/today.json",
   "http://www.bbc.co.uk/bbcone/programmes/schedules/london/yesterday.json",
   "http://www.bbc.co.uk/bbctwo/programmes/schedules/england/today.json",
@@ -25,7 +25,7 @@ var TV_PROG_FEEDS = [
   "http://www.bbc.co.uk/cbeebies/programmes/schedules/yesterday.json"
 ];
 
-var RADIO_PROG_FEEDS = [
+const RADIO_PROG_FEEDS = [
   "http://www.bbc.co.uk/radio1/programmes/schedules/today.json",
   "http://www.bbc.co.uk/radio1/programmes/schedules/yesterday.json",
   "http://www.bbc.co.uk/radio2/programmes/schedules/today.json",
@@ -38,7 +38,7 @@ var RADIO_PROG_FEEDS = [
   "http://www.bbc.co.uk/radio7/programmes/schedules/yesterday.json"
 ];
 
-var STATION_ICONS = {
+const STATION_ICONS = {
   bbcone: "bbc_one.png",
   bbctwo: "bbc_two.png",
   bbcthree: "bbc_three.png",
@@ -52,6 +52,31 @@ var STATION_ICONS = {
   radio4: "bbc_radio_four.png",
   radio7: "bbc_7.png"
 };
+
+// Based loosely on Gray Nortons Freebase previews
+// http://graynorton.com/ubiquity/freebase-nouns.html
+const PREVIEW_TMPL = '\
+  <style>\
+  .wrapper { font-size: 12px; font-family:  Calibri, Arial, sans-serif; \
+    padding: 1em 0; background:white; color:black }\
+  .thumb { float: right; padding: 0 1em 1em 1em; }\
+  #links { clear:both }\
+  h2 { font-size: 1.5em; margin:.5em 0 0 .5em }\
+  h3 { color: #888; font-size: 1em; font-weight: normal; margin:0 0 0 .67em }\
+  p, .station { margin-left: .67em }\
+  </style>\
+  <div class="wrapper">\
+    <img src="${image}" class="thumb" />\
+    <img alt="${station}" width="86" height="37" class="station" \
+      src="http://www.bbc.co.uk/iplayer/img/station_logos/small/${station_icon}" />\
+    <h2>${title}</h2>\
+    {if subtitle}\
+      <h3>${subtitle}</h3>\
+    {/if}\
+    <p class="date">${shown}</p>\
+    <p>${synopsis} (${remaining})</p>\
+    <div id="links"></div>\
+  </div>';
 
 // NOUN_TYPES
 // ######################################################
@@ -105,14 +130,7 @@ CmdUtils.CreateCommand({
     pblock.innerHTML = "Watch a recent TV programme on BBC iPlayer";
     
     if (prog && prog.data) {
-      var msg = '<img src="http://www.bbc.co.uk/iplayer/img/station_logos/small/' + 
-        '${station_icon}" alt="${station}" width="86" height="37" /><br /> ' + 
-        (prog.data.subtitle ? '${subtitle}:<br />' : '') +
-        '${synopsis} (${remaining})<br />' + 
-        // avail holding img sizes: 640_360, 512_288, 303_170, 150_84
-        '<img src="${image}" width="303" height="170" />';
-
-      pblock.innerHTML = CmdUtils.renderTemplate( msg, prog.data ); 
+      pblock.innerHTML = CmdUtils.renderTemplate( PREVIEW_TMPL, prog.data ); 
     }
   },
 
@@ -138,13 +156,7 @@ CmdUtils.CreateCommand({
     pblock.innerHTML = "Listen to a recent Radio programme on BBC iPlayer";
     
     if (prog && prog.data) {
-      var msg = '<img src="http://www.bbc.co.uk/iplayer/img/station_logos/small/' + 
-        '${station_icon}" alt="${station}" width="86" height="37" /><br /> ' + 
-        (prog.data.subtitle ? '${subtitle}:<br />' : '') +
-        '${synopsis} (${remaining})<br />' + 
-        '<img src="${image}" width="303" height="170" />';
-
-      pblock.innerHTML = CmdUtils.renderTemplate( msg, prog.data ); 
+      pblock.innerHTML = CmdUtils.renderTemplate( PREVIEW_TMPL, prog.data ); 
     }
   },
 
@@ -195,10 +207,12 @@ function flattenProg( broadcast, service ) {
   if (!broadcast.programme.media) 
     return null;
   
+  // avail holding img sizes: 640_360, 512_288, 303_170, 150_84
   return {
     "pid": broadcast.programme.pid,
     "start": getW3Date(broadcast.start),
     "end": getW3Date(broadcast.end),
+    "shown": formatDate(broadcast.start),
     "title": broadcast.programme.display_titles.title,
     "subtitle": broadcast.programme.display_titles.subtitle,
     "synopsis": broadcast.programme.short_synopsis,
@@ -232,4 +246,19 @@ function getW3Date (string) {
   return date;
 }
 
+function formatDate (string) {
+  var date = getW3Date(string);
+  var days = [null, "Monday", "Tuesday", "Wedmesday", 
+    "Thursday", "Friday", "Saturday", "Sunday"];
+  var months = ["January", "February", "March", "April", "May", "June", 
+    "July", "August", "September", "October", "November", "December"];
+  var _hours = date.getHours();
+  var _minutes = date.getMinutes();
+  var hours = (_hours % 12 === 0) ? "12" : _hours % 12;
+  var minutes = _minutes < 10 ? "0" + _minutes : _minutes;
+  var period = _hours < 12 ? "am" : "pm";
+    
+  return [ hours, ".", minutes, period, " ", days[date.getDay()], 
+    " ", date.getDate(), " ", months[date.getMonth()] ].join("");
+}
 
