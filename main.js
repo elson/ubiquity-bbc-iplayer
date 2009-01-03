@@ -34,11 +34,23 @@ var RADIO_PROG_FEEDS = [
   "http://www.bbc.co.uk/radio7/programmes/schedules/yesterday.json"
 ];
 
+var STATION_ICONS = {
+  bbcone: "bbc_one.png",
+  bbctwo: "bbc_two.png",
+  bbcthree: "bbc_three.png",
+  bbcfour: "bbc_four.png",
+  radio1: "bbc_radio_one.png",
+  radio2: "bbc_radio_two.png",
+  radio3: "bbc_radio_three.png",
+  radio4: "bbc_radio_four.png",
+  radio7: "bbc_7.png"
+};
+
 // NOUN_TYPES
 // ######################################################
 
-// BBC TV channels
-var noun_type_tv_channels = new CmdUtils.NounType( "channel",
+// BBC TV stations
+var noun_type_tv_stations = new CmdUtils.NounType( "station",
   ["bbcone", "bbctwo", "bbcthree", "bbcfour"]
 );
 
@@ -66,11 +78,9 @@ var noun_type_radio_progs = {
   }
 };
 
+
 // COMMANDS
 // ######################################################
-
-// avail iplayer img sizes: 640_360, 512_288, 303_170, 150_84
-// avail brand img sizes: 124_90, 100_73, 50_36
 
 CmdUtils.CreateCommand({
   name: "watch",
@@ -88,10 +98,11 @@ CmdUtils.CreateCommand({
     pblock.innerHTML = "Watch a recent TV programme on BBC iPlayer";
     
     if (prog && prog.data) {
-      var msg = '<img src="http://www.bbc.co.uk/ui/ide/1/images/brand/50/' + 
-        'bbc_${servicenum}.gif" /><br /> ' + 
+      var msg = '<img src="http://www.bbc.co.uk/iplayer/img/station_logos/small/' + 
+        '${station_icon}" width="86" height="37" /><br /> ' + 
         (prog.data.subtitle ? '${subtitle}:<br />' : '') +
         '${synopsis} (${remaining})<br />' + 
+        // avail holding img sizes: 640_360, 512_288, 303_170, 150_84
         '<img src="${image}" width="512" height="288" />';
 
       pblock.innerHTML = CmdUtils.renderTemplate( msg, prog.data ); 
@@ -120,8 +131,8 @@ CmdUtils.CreateCommand({
     pblock.innerHTML = "Listen to a recent Radio programme on BBC iPlayer";
     
     if (prog && prog.data) {
-      var msg = '<img src="http://www.bbc.co.uk/ui/ide/1/images/brand/50/' + 
-        'radio_${servicenum}.gif" /><br /> ' + 
+      var msg = '<img src="http://www.bbc.co.uk/iplayer/img/station_logos/small/' + 
+        '${station_icon}" width="86" height="37" /><br /> ' + 
         (prog.data.subtitle ? '${subtitle}:<br />' : '') +
         '${synopsis} (${remaining})<br />' + 
         '<img src="${image}" width="512" height="288" />';
@@ -190,9 +201,9 @@ function flattenProg( broadcast, service ) {
     "playlist": "http://www.bbc.co.uk/iplayer/playlist/"  + broadcast.programme.pid,
     "image": "http://www.bbc.co.uk/iplayer/images/episode/" + broadcast.programme.pid + "_512_288.jpg",
     "type": service.type,
-    "service": service.key,
-    "channel": service.title,
-    "servicenum": (service.type == 'tv') ? service.key.substr(3) : service.key.substr(5)
+    "station": service.title,
+    "station_id": service.key,
+    "station_icon": STATION_ICONS[service.key]
   };
 }
 
