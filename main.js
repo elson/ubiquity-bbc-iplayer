@@ -55,6 +55,7 @@ const STATION_ICONS = {
 
 // Based loosely on Gray Nortons Freebase previews
 // http://graynorton.com/ubiquity/freebase-nouns.html
+// Avail holding img sizes: 640_360, 512_288, 303_170, 150_84
 const PREVIEW_TMPL = '\
   <style>\
   .wrapper { font-size: 12px; font-family:  Calibri, Arial, sans-serif; \
@@ -66,17 +67,19 @@ const PREVIEW_TMPL = '\
   p, .station { margin-left: .67em }\
   </style>\
   <div class="wrapper">\
-    <img src="${image}" class="thumb" />\
-    <img alt="${station}" width="86" height="37" class="station" \
-      src="http://www.bbc.co.uk/iplayer/img/station_logos/small/${station_icon}" />\
-    <h2>${title}</h2>\
-    {if subtitle}\
-      <h3>${subtitle}</h3>\
+    <img src="http://www.bbc.co.uk/iplayer/images/episode/${programme.pid}_303_170.jpg" \
+    width="303" height="170" alt="${programme.display_titles.title}"class="thumb" />\
+    <img alt="${_service.title}" width="86" height="37" class="station" \
+      src="http://www.bbc.co.uk/iplayer/img/station_logos/small/${_service.img}" />\
+    <h2>${programme.display_titles.title}</h2>\
+    {if programme.display_titles.subtitle}\
+      <h3>${programme.display_titles.subtitle}</h3>\
     {/if}\
-    <p class="date">${shown}</p>\
-    <p>${synopsis} (${remaining})</p>\
+    <p class="date">${_shown}</p>\
+    <p>${programme.short_synopsis} (${programme.media.availability.replace(/.to.*$/, "")})</p>\
     <div id="links"></div>\
   </div>';
+
 
 // NOUN_TYPES
 // ######################################################
@@ -91,8 +94,8 @@ var noun_type_tv_stations = new CmdUtils.NounType( "station",
 var noun_type_tv_progs = {
   _name: "BBC TV Programmes",
   suggest: function( text, html, callback ) {
-    getProgs( TV_PROG_FEEDS, text, function( prog ) {
-      callback( CmdUtils.makeSugg( prog.title, prog.title, prog ) );
+    getProgs( TV_PROG_FEEDS, text, function( broadcast, title ) {
+      callback( CmdUtils.makeSugg( title, title, broadcast ) );
     });
     return [];
   }
@@ -103,8 +106,8 @@ var noun_type_tv_progs = {
 var noun_type_radio_progs = {
   _name: "BBC Radio Programmes",
   suggest: function( text, html, callback ) {
-    getProgs( RADIO_PROG_FEEDS, text, function( prog ) {
-      callback( CmdUtils.makeSugg( prog.title, prog.title, prog ) );
+    getProgs( RADIO_PROG_FEEDS, text, function( broadcast, title ) {
+      callback( CmdUtils.makeSugg( title, title, broadcast ) );
     });
     return [];
   }
@@ -120,22 +123,25 @@ CmdUtils.CreateCommand({
   homepage: "http://github.com/elson/ubiquity-bbc-iplayer/wikis/home",
   author: { name: "Stephen Elson", email: "stephen.elson@gmail.com" },
   icon: "http://www.bbc.co.uk/favicon.ico",
-  license: "MPL",
+  license: "MIT",
   
   takes: { "tv programme": noun_type_tv_progs },
 
-  preview: function( pblock, prog ) {
+  preview: function( pblock, item ) {
     if (!pblock) return;
 
     pblock.innerHTML = "Watch a recent TV programme on BBC iPlayer";
     
-    if (prog && prog.data) {
-      pblock.innerHTML = CmdUtils.renderTemplate( PREVIEW_TMPL, prog.data ); 
+    if (item && item.data) {
+      var broadcast = item.data;
+      broadcast._service.img = STATION_ICONS[broadcast._service.key];
+      broadcast._shown = formatDate(broadcast.start);
+      pblock.innerHTML = CmdUtils.renderTemplate( PREVIEW_TMPL, broadcast ); 
     }
   },
 
-  execute: function( prog ) {
-    Utils.openUrlInBrowser(prog.data.url);
+  execute: function( item ) {
+    Utils.openUrlInBrowser("http://www.bbc.co.uk/iplayer/episode/" + item.data.programme.pid);
   }
 });
 
@@ -146,22 +152,25 @@ CmdUtils.CreateCommand({
   homepage: "http://github.com/elson/ubiquity-bbc-iplayer/wikis/home",
   author: { name: "Stephen Elson", email: "stephen.elson@gmail.com" },
   icon: "http://www.bbc.co.uk/favicon.ico",
-  license: "MPL",
+  license: "MIT",
   
   takes: { "radio programme": noun_type_radio_progs },
 
-  preview: function( pblock, prog ) {
+  preview: function( pblock, item ) {
     if (!pblock) return;
 
     pblock.innerHTML = "Listen to a recent Radio programme on BBC iPlayer";
     
-    if (prog && prog.data) {
-      pblock.innerHTML = CmdUtils.renderTemplate( PREVIEW_TMPL, prog.data ); 
+    if (item && item.data) {
+      var broadcast = item.data;
+      broadcast._service.img = STATION_ICONS[broadcast._service.key];
+      broadcast._shown = formatDate(broadcast.start);
+      pblock.innerHTML = CmdUtils.renderTemplate( PREVIEW_TMPL, broadcast );
     }
   },
 
-  execute: function( prog ) {
-    Utils.openUrlInBrowser(prog.data.url);
+  execute: function( item ) {
+    Utils.openUrlInBrowser("http://www.bbc.co.uk/iplayer/episode/" + item.data.programme.pid);
   }
 });
 
@@ -194,38 +203,12 @@ function getProgs( feeds, query, callback){
 
 function matchProgs( json, query, callback ) {
   json.schedule.day.broadcasts.forEach( function( broadcast ) {
-    prog = flattenProg( broadcast, json.schedule.service );
-    if ( prog && prog.title.match(query, "i") ) {
-        callback(prog);
+    if ( broadcast.programme.media && 
+      broadcast.programme.display_titles.title.match(query, "i") ) {
+        broadcast._service = json.schedule.service;
+        callback(broadcast, broadcast.programme.display_titles.title);
     }
   });
-}
-
-
-function flattenProg( broadcast, service ) {
-
-  if (!broadcast.programme.media) 
-    return null;
-  
-  // avail holding img sizes: 640_360, 512_288, 303_170, 150_84
-  return {
-    "pid": broadcast.programme.pid,
-    "start": getW3Date(broadcast.start),
-    "end": getW3Date(broadcast.end),
-    "shown": formatDate(broadcast.start),
-    "title": broadcast.programme.display_titles.title,
-    "subtitle": broadcast.programme.display_titles.subtitle,
-    "synopsis": broadcast.programme.short_synopsis,
-    "remaining": broadcast.programme.media.availability.
-      substr(0, broadcast.programme.media.availability.indexOf(" to")),
-    "url": "http://www.bbc.co.uk/iplayer/episode/" + broadcast.programme.pid,
-    "playlist": "http://www.bbc.co.uk/iplayer/playlist/"  + broadcast.programme.pid,
-    "image": "http://www.bbc.co.uk/iplayer/images/episode/" + broadcast.programme.pid + "_303_170.jpg",
-    "type": service.type,
-    "station": service.title,
-    "station_id": service.key,
-    "station_icon": STATION_ICONS[service.key]
-  };
 }
 
 
@@ -245,6 +228,7 @@ function getW3Date (string) {
 
   return date;
 }
+
 
 function formatDate (string) {
   var date = getW3Date(string);
