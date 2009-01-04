@@ -20,14 +20,21 @@ const TV_PROG_FEEDS = iPlayerFeeds ([
 
 const RADIO_PROG_FEEDS = iPlayerFeeds ([
   { service: "radio1" },
+  { service: "1xtra" },
   { service: "radio2" },
   { service: "radio3" },
   { service: "radio4", outlet: "fm" },
-  { service: "radio7" }
+  { service: "fivelive" },
+  { service: "5livesportsextra" },
+  { service: "6music" },
+  { service: "radio7" },
+  { service: "asiannetwork" },
+  { service: "worldservice" }
 ]);
 
 const STATION_ICONS = {
   bbcone: "bbc_one.png",
+  "1xtra": "bbc_1xtra.png",
   bbctwo: "bbc_two.png",
   bbcthree: "bbc_three.png",
   bbcfour: "bbc_four.png",
@@ -38,7 +45,12 @@ const STATION_ICONS = {
   radio2: "bbc_radio_two.png",
   radio3: "bbc_radio_three.png",
   radio4: "bbc_radio_four.png",
-  radio7: "bbc_7.png"
+  fivelive: "bbc_radio_five_live.png",
+  "5livesportsextra": "bbc_radio_five_live_sports_extra.png",
+  "6music": "bbc_6music.png",
+  radio7: "bbc_7.png",
+  asiannetwork: "bbc_asian_network.png",
+  worldservice: "bbc_world_service.png"
 };
 
 // Based loosely on Gray Nortons Freebase previews
@@ -132,7 +144,7 @@ function iPlayerCommand ( name, description, takes ) {
     takes: takes,
     
     preview: function( pblock, item ) {
-      if (!pblock) return;
+      if (!pblock) { return; }
 
       pblock.innerHTML = description;
       if (item && item.data) {
@@ -147,7 +159,7 @@ function iPlayerCommand ( name, description, takes ) {
       Utils.openUrlInBrowser("http://www.bbc.co.uk/iplayer/episode/" + item.data.programme.pid);
     }
   });
-};
+}
 
 // Returns array of feed URLs for BBC TV & Radio stations 
 function iPlayerFeeds ( config ) {
@@ -211,13 +223,13 @@ function Slow ( delay ) {
   if ( !delay ) { delay = 400; }
   
   this.please = function ( fn ) {
-    if (timer) Utils.clearTimeout( timer );
+    if (timer) { Utils.clearTimeout( timer ); }
         
     timer = Utils.setTimeout ( function() {
       timer = null;
       fn();
     }, delay );
-  }
+  };
 }
 
 
