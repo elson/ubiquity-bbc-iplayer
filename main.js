@@ -121,11 +121,14 @@ function iPlayerNounType ( name, feeds ) {
   return {
     _name: name,
     suggest: function( text, html, callback ) {
+      if ( text.length < 2) return [];
+      
       slowly.please( function() {
         getProgs( feeds, text, function( broadcast, title ) {
           callback( CmdUtils.makeSugg( title, title, broadcast ) );
         });
       });
+      
       return [];
     }
   };
@@ -182,9 +185,11 @@ function iPlayerFeeds ( config ) {
 var cache = {};
 
 function getProgs( feeds, query, callback){
+  var pids = {}; // use same pid cache to catch multi-station repeats
+  
   feeds.forEach( function( feed ) {
     if ( cache[feed] ) {
-      matchProgs( cache[feed], query, callback );
+      matchProgs( cache[feed], pids, query, callback );
     }
     else {
       jQuery.ajax( {
@@ -192,7 +197,7 @@ function getProgs( feeds, query, callback){
         dataType: "json",
         success: function( json ){
           cache[feed] = json;
-          matchProgs( json, query, callback );
+          matchProgs( json, pids, query, callback );
         },
         error: function() {
           CmdUtils.log("Problem loading: " + feed);
@@ -203,10 +208,11 @@ function getProgs( feeds, query, callback){
 }
 
 
-function matchProgs( json, query, callback ) {
+function matchProgs( json, pids, query, callback ) {
   json.schedule.day.broadcasts.forEach( function( broadcast ) {
-    if ( broadcast.programme.media && 
+    if ( !!broadcast.programme.media && !pids[broadcast.programme.pid] && 
       broadcast.programme.display_titles.title.match(query, "i") ) {
+        pids[broadcast.programme.pid] = true;
         broadcast._service = json.schedule.service;
         callback(broadcast, broadcast.programme.display_titles.title);
     }
