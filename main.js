@@ -33,24 +33,24 @@ const RADIO_PROG_FEEDS = iPlayerFeeds ([
 ]);
 
 const STATION_ICONS = {
-  bbcone: "bbc_one.png",
+  "bbcone": "bbc_one.png",
   "1xtra": "bbc_1xtra.png",
-  bbctwo: "bbc_two.png",
-  bbcthree: "bbc_three.png",
-  bbcfour: "bbc_four.png",
-  bbcnews: "bbc_news24.png",
-  cbbc: "cbbc.png",
-  cbeebies: "cbeebies.png",
-  radio1: "bbc_radio_one.png",
-  radio2: "bbc_radio_two.png",
-  radio3: "bbc_radio_three.png",
-  radio4: "bbc_radio_four.png",
-  fivelive: "bbc_radio_five_live.png",
+  "bbctwo": "bbc_two.png",
+  "bbcthree": "bbc_three.png",
+  "bbcfour": "bbc_four.png",
+  "bbcnews": "bbc_news24.png",
+  "cbbc": "cbbc.png",
+  "cbeebies": "cbeebies.png",
+  "radio1": "bbc_radio_one.png",
+  "radio2": "bbc_radio_two.png",
+  "radio3": "bbc_radio_three.png",
+  "radio4": "bbc_radio_four.png",
+  "fivelive": "bbc_radio_five_live.png",
   "5livesportsextra": "bbc_radio_five_live_sports_extra.png",
   "6music": "bbc_6music.png",
-  radio7: "bbc_7.png",
-  asiannetwork: "bbc_asian_network.png",
-  worldservice: "bbc_world_service.png"
+  "radio7": "bbc_7.png",
+  "asiannetwork": "bbc_asian_network.png",
+  "worldservice": "bbc_world_service.png"
 };
 
 // Based loosely on Gray Nortons Freebase previews
@@ -246,15 +246,15 @@ function getW3Date (string) {
   if (d[8]) { date.setMinutes(d[8]); }
   if (d[10]) { date.setSeconds(d[10]); }
   if (d[12]) { date.setMilliseconds(Number("0." + d[12]) * 1000); }
-
+  
   return date;
 }
 
-
+// 2009-01-04T07:00:00Z
 function formatDate (string) {
   var date = getW3Date(string);
-  var days = [null, "Monday", "Tuesday", "Wedmesday", 
-    "Thursday", "Friday", "Saturday", "Sunday"];
+  var days = ["Sunday", "Monday", "Tuesday", "Wednesday", 
+    "Thursday", "Friday", "Saturday"];
   var months = ["January", "February", "March", "April", "May", "June", 
     "July", "August", "September", "October", "November", "December"];
   var _hours = date.getHours();
@@ -262,7 +262,7 @@ function formatDate (string) {
   var hours = (_hours % 12 === 0) ? "12" : _hours % 12;
   var minutes = _minutes < 10 ? "0" + _minutes : _minutes;
   var period = _hours < 12 ? "am" : "pm";
-    
+  
   return [ hours, ".", minutes, period, " ", days[date.getDay()], 
     " ", date.getDate(), " ", months[date.getMonth()] ].join("");
 }
