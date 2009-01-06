@@ -2,12 +2,20 @@
   Subscribe to these commands at:
   http://github.com/elson/ubiquity-bbc-iplayer/wikis/command-feed
   
+  Version:
+    0.2
+  
   Usage:
-    watch (tv programme)
-    listen (radio programme)
-
-  Some aspects based on Gray Nortons Freebase previews
-  http://graynorton.com/ubiquity/freebase-nouns.html
+    watch (tv programme name)
+    listen (radio programme name)
+    
+    You can filter programmes by tpying "todays" or "yesterdays" before the 
+    programme name. This is quite basic for now but will be improved in 
+    future versions.
+  
+  Credits:
+    Some aspects based on Gray Nortons Freebase previews
+    http://graynorton.com/ubiquity/freebase-nouns.html
 */
 
 
@@ -275,8 +283,6 @@ var Query = function () {
       });
 
       if ( startsWith ) { query.what = words.slice(1).join(" ") }
-
-      CmdUtils.log("what='" + query.what + "', date='" + query.date + "'");
 
       return query;
     }
