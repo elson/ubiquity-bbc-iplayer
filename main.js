@@ -1,275 +1,406 @@
+/*
+  Subscribe to these commands at:
+  http://github.com/elson/ubiquity-bbc-iplayer/wikis/command-feed
+  
+  Usage:
+    watch (tv programme)
+    listen (radio programme)
 
-// Subscribe to these commands at http://github.com/elson/ubiquity-bbc-iplayer/wikis/command-feed
-// Usage: 
-//    watch (tv programme)
-//    listen (radio programme)
-
-
-// CONSTANTS
-// ######################################################
-
-const TV_PROG_FEEDS = iPlayerFeeds ([
-  { service: "bbcone", outlet: "london" },
-  { service: "bbctwo", outlet: "england" },
-  { service: "bbcthree" },
-  { service: "bbcfour" },
-  { service: "bbcnews" },
-  { service: "cbbc" },
-  { service: "cbeebies" }
-]);
-
-const RADIO_PROG_FEEDS = iPlayerFeeds ([
-  { service: "radio1" },
-  { service: "1xtra" },
-  { service: "radio2" },
-  { service: "radio3" },
-  { service: "radio4", outlet: "fm" },
-  { service: "fivelive" },
-  { service: "5livesportsextra" },
-  { service: "6music" },
-  { service: "radio7" },
-  { service: "asiannetwork" },
-  { service: "worldservice" }
-]);
-
-const STATION_ICONS = {
-  "bbcone": "bbc_one.png",
-  "1xtra": "bbc_1xtra.png",
-  "bbctwo": "bbc_two.png",
-  "bbcthree": "bbc_three.png",
-  "bbcfour": "bbc_four.png",
-  "bbcnews": "bbc_news24.png",
-  "cbbc": "cbbc.png",
-  "cbeebies": "cbeebies.png",
-  "radio1": "bbc_radio_one.png",
-  "radio2": "bbc_radio_two.png",
-  "radio3": "bbc_radio_three.png",
-  "radio4": "bbc_radio_four.png",
-  "fivelive": "bbc_radio_five_live.png",
-  "5livesportsextra": "bbc_radio_five_live_sports_extra.png",
-  "6music": "bbc_6music.png",
-  "radio7": "bbc_7.png",
-  "asiannetwork": "bbc_asian_network.png",
-  "worldservice": "bbc_world_service.png"
-};
-
-// Based loosely on Gray Nortons Freebase previews
-// http://graynorton.com/ubiquity/freebase-nouns.html
-// Avail holding img sizes: 640_360, 512_288, 303_170, 150_84
-const PREVIEW_TMPL = '\
-  <style>\
-  .wrapper { font-size: 12px; font-family:  Calibri, Arial, sans-serif; \
-    padding: 1em 0; background:white; color:black }\
-  .thumb { float: right; padding: 0 1em 1em 1em; }\
-  #links { clear:both }\
-  h2 { font-size: 1.5em; margin:.5em 0 0 .5em }\
-  h3 { color: #888; font-size: 1em; font-weight: normal; margin:0 0 0 .67em }\
-  p, .station { margin-left: .67em }\
-  </style>\
-  <div class="wrapper">\
-    <img src="http://www.bbc.co.uk/iplayer/images/episode/${programme.pid}_303_170.jpg" \
-    width="303" height="170" alt="${programme.display_titles.title}"class="thumb" />\
-    <img alt="${_service.title}" width="86" height="37" class="station" \
-      src="http://www.bbc.co.uk/iplayer/img/station_logos/small/${_service.img}" />\
-    <h2>${programme.display_titles.title}</h2>\
-    {if programme.display_titles.subtitle}\
-      <h3>${programme.display_titles.subtitle}</h3>\
-    {/if}\
-    <p class="date">${_shown}</p>\
-    <p>${programme.short_synopsis} (${programme.media.availability.replace(/.to.*$/, "")})</p>\
-    <div id="links"></div>\
-  </div>';
+  Some aspects based on Gray Nortons Freebase previews
+  http://graynorton.com/ubiquity/freebase-nouns.html
+*/
 
 
-// NOUN_TYPES
+const TYPE_TV = "tv";
+const TYPE_RADIO = "radio";
+
+
+/**
+  @namespace Schedule
+  Static for dealing with programme schedules
+*/
+var Schedule = function () {
+
+  // Private
+
+  var CACHE = {};
+  
+  const STATIONS = {
+    "tv": {
+      "bbcone": { img: "bbc_one.png", outlet: "london" },
+      "bbctwo": { img: "bbc_two.png", outlet: "england" },
+      "bbcthree": { img: "bbc_three.png" },
+      "bbcfour": { img: "bbc_four.png" },
+      "bbcnews": { img: "bbc_news24.png" },
+      "cbbc": { img: "cbbc.png" },
+      "cbeebies": { img: "cbeebies.png" }
+    },
+    "radio": {
+      "radio1": { img: "bbc_radio_one.png" },
+      "1xtra": { img: "bbc_1xtra.png" },
+      "radio2": { img: "bbc_radio_two.png" },
+      "radio3": { img: "bbc_radio_three.png" },
+      "radio4": { img: "bbc_radio_four.png", outlet: "fm" },
+      "fivelive": { img: "bbc_radio_five_live.png" },
+      "5livesportsextra": { img: "bbc_radio_five_live_sports_extra.png" },
+      "6music": { img: "bbc_6music.png" },
+      "radio7": { img: "bbc_7.png" },
+      "asiannetwork": { img: "bbc_asian_network.png" },
+      "worldservice": { img: "bbc_world_service.png" }
+    }
+  };
+
+  /**
+    @function getFeedUrls
+    @private
+    Returns array of feed URLs for BBC TV & Radio stations
+  */
+  function getFeedURLs ( query ) {
+
+    var feeds = [], base;
+    var stations = STATIONS[query.type];
+
+    jQuery.each( stations, function( name, station ) {
+      base = "http://www.bbc.co.uk/" + name +
+        "/programmes/schedules/" + (station.outlet ? station.outlet + "/" : "");
+      if (query.date == "" || query.date == "todays") { 
+        feeds.push( base + "today.json" );
+      }
+      if (query.date == "" || query.date == "yesterdays") {
+        feeds.push( base + "yesterday.json" );
+      }
+    });
+
+    return feeds;
+  }
+
+  /**
+    @function filter
+    @private
+    For a schedule pass only the broadcasts matching query to func
+  */
+  function filter ( schedule, query, func ) {
+    var pids = {}, station, prog;
+
+    schedule.day.broadcasts.forEach( function( broadcast ) {
+      if ( !pids[broadcast.programme.pid] && Broadcast.check( broadcast, query ) ) {
+        pids[broadcast.programme.pid] = true;
+        station = STATIONS[query.type][schedule.service.key];
+        broadcast._service =  schedule.service;
+        broadcast._service.img = station.img;
+        func(broadcast);
+      }
+    });
+  }
+
+  // Public
+
+  return {
+
+    /**
+      @function Schedule.find
+      Finds broadcasts matching Query obj, calls func for each hit
+    */
+    find: function ( query, func ) {
+      var urls = getFeedURLs( query );
+
+      urls.forEach( function( url ) {
+        if ( CACHE[url] ) {
+          filter( CACHE[url], query, func );
+        }
+        else {
+          jQuery.ajax( {
+            url: url,
+            dataType: "json",
+            success: function( json ){
+              CACHE[url] = json.schedule;
+              filter( CACHE[url], query, func );
+            },
+            error: function() {
+              CmdUtils.log("Problem loading: " + url);
+            }
+          });
+        }
+      });
+    }
+    
+  };
+
+}();
+
+
+/**
+  @namespace Broadcast
+  @description Functions for working with programmes
+*/
+var Broadcast = function () {
+
+  // Private
+
+  // Avail holding img sizes: 640_360, 512_288, 303_170, 150_84
+  const TEMPLATE = '\
+    <style>\
+    .wrapper { font-size: 12px; font-family:  Calibri, Arial, sans-serif; \
+      padding: 1em 0; background:white; color:black }\
+    .thumb { float: right; padding: 0 1em 1em 1em; }\
+    #links { clear:both }\
+    h2 { font-size: 1.5em; margin:.5em 0 0 .5em }\
+    h3 { color: #888; font-size: 1em; font-weight: normal; margin:0 0 0 .67em }\
+    p, .station { margin-left: .67em }\
+    </style>\
+    <div class="wrapper">\
+      <img src="http://www.bbc.co.uk/iplayer/images/episode/${programme.pid}_303_170.jpg" \
+      width="303" height="170" alt="${programme.display_titles.title}"class="thumb" />\
+      <img alt="${_service.title}" width="86" height="37" class="station" \
+        src="http://www.bbc.co.uk/iplayer/img/station_logos/small/${_service.img}" />\
+      <h2>${programme.display_titles.title}</h2>\
+      {if programme.display_titles.subtitle}\
+        <h3>${programme.display_titles.subtitle}</h3>\
+      {/if}\
+      <p class="date">${_shown}</p>\
+      <p>${programme.short_synopsis} (${programme.media.availability.replace(/.to.*$/, "")})</p>\
+      <div id="links"></div>\
+    </div>';
+
+  /**
+    @function getW3Date
+    @private
+    Returns a Date object of strings in format 2009-01-04T07:00:00Z
+    Modified from http://delete.me.uk/2005/03/iso8601.html
+  */
+  function getW3Date (string) {
+    var regexp = "([0-9]{4})(-([0-9]{2})(-([0-9]{2})" +
+      "(T([0-9]{2}):([0-9]{2})(:([0-9]{2})(\.([0-9]+))?)?" +
+      "(Z|(([-+])([0-9]{2}):([0-9]{2})))?)?)?)?";
+    var d = string.match(new RegExp(regexp));
+    var date = new Date(d[1], 0, 1);
+    if (d[3]) { date.setMonth(d[3] - 1); }
+    if (d[5]) { date.setDate(d[5]); }
+    if (d[7]) { date.setHours(d[7]); }
+    if (d[8]) { date.setMinutes(d[8]); }
+    if (d[10]) { date.setSeconds(d[10]); }
+    if (d[12]) { date.setMilliseconds(Number("0." + d[12]) * 1000); }
+
+    return date;
+  }
+
+  /**
+    @function formatDate
+    @private
+    Returns human readable version of a date.
+  */
+  function formatDate (string) {
+    var date = getW3Date(string);
+    var days = ["Sunday", "Monday", "Tuesday", "Wednesday",
+      "Thursday", "Friday", "Saturday"];
+    var months = ["January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"];
+    var _hours = date.getHours();
+    var _minutes = date.getMinutes();
+    var _date = date.getDate();
+    var hours = (_hours % 12 === 0) ? "12" : _hours % 12;
+    var minutes = _minutes < 10 ? "0" + _minutes : _minutes;
+    var period = _hours < 12 ? "am" : "pm";
+    var suffix = "th";
+    
+    if ( _date == 1 || _date == 21 || _date == 31 ) { suffix = "st"; }
+    if ( _date == 2 || _date == 22 ) { suffix = "nd"; }
+
+    return [ hours, ".", minutes, period, " ", days[date.getDay()],
+      " ", _date, suffix, " ", months[date.getMonth()] ].join("");
+  }
+
+  // Public
+
+  return {
+    create: function ( broadcast ) {
+
+    },
+
+    /**
+      @function Broadcast.check
+      Returns true if a broadcast is available and title matches query.what
+    */
+    check: function ( broadcast, query ) {
+      return !!broadcast.programme.media &&
+        broadcast.programme.display_titles.title.match(query.what, "i");
+    },
+    
+    /**
+      @function Broadcast.render
+      Returns broadcast details as an HTML string
+    */
+    render: function ( broadcast ) {
+      broadcast._shown = formatDate(broadcast.start);
+
+      return CmdUtils.renderTemplate( TEMPLATE, broadcast )
+    }
+  };
+
+}(); // End Broadcast
+
+
+/**
+  @namespace Query
+  @description Functions for parsing natural language expression
+*/
+var Query = function () {
+
+  // Public
+
+  return {
+  
+    /**
+      @function create
+      Returns a query object containing what, type, station, genre, date
+    */
+    create: function ( expr, opts ) {
+    
+      var query = jQuery.extend({
+        what: expr, 
+        type: TYPE_TV, 
+        station: "",
+        genre: "", 
+        date: ""
+        }, opts 
+      );
+      var words = expr.split(" ");
+      var startsWith = false;
+
+      words.forEach( function( word, index ) {
+        if (word == "todays" || word == "yesterdays") {
+          query.date = word;
+          if ( index === 0 ) { startsWith = true; }
+        }
+      });
+
+      if ( startsWith ) { query.what = words.slice(1).join(" ") }
+
+      CmdUtils.log("what='" + query.what + "', date='" + query.date + "'");
+
+      return query;
+    }
+    
+  };
+
+}(); // End Query
+
+
+/**
+  @namespace UbiqHelper
+  Ubiquity helper functions
+*/
+var UbiqHelper = function () {
+
+  // Private
+  
+  function Slow ( delay ) {
+    var timer = null;
+    if ( !delay ) { delay = 400; }
+    this.please = function ( func ) {
+      if (timer) { Utils.clearTimeout( timer ); }
+      timer = Utils.setTimeout ( function() {
+        timer = null;
+        func();
+      }, delay );
+    };
+  }
+  // Public
+
+  return  {
+
+    /**
+      @function UbiqHelper.createNoun
+      Create a Ubiquity noun type
+    */
+    createNoun: function ( name, tv_or_radio ) {
+      
+      var slowly = new Slow();
+
+      return {
+        _name: name,
+        suggest: function( text, html, callback ) {
+
+          var query, title;
+
+          if ( text.length < 2) { return []; }
+
+          slowly.please( function() {
+            query = Query.create(text, { type: tv_or_radio });
+            Schedule.find( query, function( broadcast ) {
+              title = broadcast.programme.display_titles.title;
+              callback( CmdUtils.makeSugg( title, title, broadcast ) );
+            });
+          });
+
+          return [];
+        }
+      };
+    },
+
+    /**
+      @function UbiqHelper.createCommand
+      Create a Ubiquity command
+    */
+    createCommand: function ( name, description, takes ) {
+
+      CmdUtils.CreateCommand({
+        name: name,
+        description: description,
+        homepage: "http://github.com/elson/ubiquity-bbc-iplayer/wikis/home",
+        author: { name: "Stephen Elson", email: "stephen.elson@gmail.com" },
+        icon: "http://www.bbc.co.uk/favicon.ico",
+        license: "MIT",
+        takes: takes,
+
+        preview: function( el, item ) {
+          if (!el) { return; }
+
+          el.innerHTML = description;
+          if (item && item.data) {
+            el.innerHTML = Broadcast.render( item.data );
+          }
+        },
+
+        execute: function( item ) {
+          Utils.openUrlInBrowser("http://www.bbc.co.uk/iplayer/episode/" + 
+            item.data.programme.pid);
+        }
+      });
+      
+    }
+    
+  };
+
+}(); // End UbiqHelper
+
+
+// Initialise nouns and commands
 // ######################################################
 
 // Recent BBC TV programmes available on iPlayer
-var noun_type_tv_progs = iPlayerNounType( "BBC TV Programmes", TV_PROG_FEEDS );
+var noun_type_tv_progs = UbiqHelper.createNoun(
+  "BBC TV Programmes",
+  TYPE_TV
+);
 
 // Recent BBC Radio programmes available on iPlayer
-var noun_type_radio_progs = iPlayerNounType( "BBC Radio Programmes", RADIO_PROG_FEEDS );
-
-
-// COMMANDS
-// ######################################################
+var noun_type_radio_progs = UbiqHelper.createNoun(
+  "BBC Radio Programmes",
+  TYPE_RADIO
+);
 
 // Watch BBC TV programmes
-iPlayerCommand( 
-  "watch", 
+UbiqHelper.createCommand(
+  "watch",
   "Watch a recent TV programme on BBC iPlayer", {
   "tv programme": noun_type_tv_progs
 });
 
-
 // Listen to BBC Radio programmes
-iPlayerCommand( 
-  "listen", 
+UbiqHelper.createCommand(
+  "listen",
   "Listen to a recent Radio programme on BBC iPlayer", {
   "radio programme": noun_type_radio_progs
 });
-
-
-// FACTORIES
-// ######################################################
-
-// Creates BBC TV & Radio programme noun_types from feeds
-function iPlayerNounType ( name, feeds ) {
-
-  var slowly = new Slow();
-  
-  return {
-    _name: name,
-    suggest: function( text, html, callback ) {
-      if ( text.length < 2) return [];
-      
-      slowly.please( function() {
-        getProgs( feeds, text, function( broadcast, title ) {
-          callback( CmdUtils.makeSugg( title, title, broadcast ) );
-        });
-      });
-      
-      return [];
-    }
-  };
-}
-
-// Creates commands using programme noun_types
-function iPlayerCommand ( name, description, takes ) {
-
-  CmdUtils.CreateCommand({
-    name: name,
-    description: description,
-    homepage: "http://github.com/elson/ubiquity-bbc-iplayer/wikis/home",
-    author: { name: "Stephen Elson", email: "stephen.elson@gmail.com" },
-    icon: "http://www.bbc.co.uk/favicon.ico",
-    license: "MIT",
-    takes: takes,
-    
-    preview: function( pblock, item ) {
-      if (!pblock) { return; }
-
-      pblock.innerHTML = description;
-      if (item && item.data) {
-        var broadcast = item.data;
-        broadcast._service.img = STATION_ICONS[broadcast._service.key];
-        broadcast._shown = formatDate(broadcast.start);
-        pblock.innerHTML = CmdUtils.renderTemplate( PREVIEW_TMPL, broadcast );
-      }
-    },
-    
-    execute: function( item ) {
-      Utils.openUrlInBrowser("http://www.bbc.co.uk/iplayer/episode/" + item.data.programme.pid);
-    }
-  });
-}
-
-// Returns array of feed URLs for BBC TV & Radio stations 
-function iPlayerFeeds ( config ) {
-  
-  var feeds = [], base;
-  
-  config.forEach( function( item ){
-    base = "http://www.bbc.co.uk/" + item.service +
-      "/programmes/schedules/" + (item.outlet ? item.outlet + "/" : "");
-    feeds.push( base + "today.json" );
-    feeds.push( base + "yesterday.json" );
-  });
-  
-  return feeds;
-}
-
-// UTILITIES
-// ######################################################
-
-var cache = {};
-
-function getProgs( feeds, query, callback){
-  var pids = {}; // use same pid cache to catch multi-station repeats
-  
-  feeds.forEach( function( feed ) {
-    if ( cache[feed] ) {
-      matchProgs( cache[feed], pids, query, callback );
-    }
-    else {
-      jQuery.ajax( {
-        url: feed,
-        dataType: "json",
-        success: function( json ){
-          cache[feed] = json;
-          matchProgs( json, pids, query, callback );
-        },
-        error: function() {
-          CmdUtils.log("Problem loading: " + feed);
-        }
-      });
-    }
-  });
-}
-
-
-function matchProgs( json, pids, query, callback ) {
-  json.schedule.day.broadcasts.forEach( function( broadcast ) {
-    if ( !!broadcast.programme.media && !pids[broadcast.programme.pid] && 
-      broadcast.programme.display_titles.title.match(query, "i") ) {
-        pids[broadcast.programme.pid] = true;
-        broadcast._service = json.schedule.service;
-        callback(broadcast, broadcast.programme.display_titles.title);
-    }
-  });
-}
-
-
-// Used by noun_types to prevent too many http requests
-// Based loosely on Gray Nortons Freebase
-// http://graynorton.com/ubiquity/freebase-nouns.html
-function Slow ( delay ) {
-  var timer = null;
-  
-  if ( !delay ) { delay = 400; }
-  
-  this.please = function ( fn ) {
-    if (timer) { Utils.clearTimeout( timer ); }
-        
-    timer = Utils.setTimeout ( function() {
-      timer = null;
-      fn();
-    }, delay );
-  };
-}
-
-
-// getW3Date modified from http://delete.me.uk/2005/03/iso8601.html
-function getW3Date (string) {
-  var regexp = "([0-9]{4})(-([0-9]{2})(-([0-9]{2})" +
-    "(T([0-9]{2}):([0-9]{2})(:([0-9]{2})(\.([0-9]+))?)?" +
-    "(Z|(([-+])([0-9]{2}):([0-9]{2})))?)?)?)?";
-  var d = string.match(new RegExp(regexp));
-  var date = new Date(d[1], 0, 1);
-  if (d[3]) { date.setMonth(d[3] - 1); }
-  if (d[5]) { date.setDate(d[5]); }
-  if (d[7]) { date.setHours(d[7]); }
-  if (d[8]) { date.setMinutes(d[8]); }
-  if (d[10]) { date.setSeconds(d[10]); }
-  if (d[12]) { date.setMilliseconds(Number("0." + d[12]) * 1000); }
-  
-  return date;
-}
-
-// 2009-01-04T07:00:00Z
-function formatDate (string) {
-  var date = getW3Date(string);
-  var days = ["Sunday", "Monday", "Tuesday", "Wednesday", 
-    "Thursday", "Friday", "Saturday"];
-  var months = ["January", "February", "March", "April", "May", "June", 
-    "July", "August", "September", "October", "November", "December"];
-  var _hours = date.getHours();
-  var _minutes = date.getMinutes();
-  var hours = (_hours % 12 === 0) ? "12" : _hours % 12;
-  var minutes = _minutes < 10 ? "0" + _minutes : _minutes;
-  var period = _hours < 12 ? "am" : "pm";
-  
-  return [ hours, ".", minutes, period, " ", days[date.getDay()], 
-    " ", date.getDate(), " ", months[date.getMonth()] ].join("");
-}
 
