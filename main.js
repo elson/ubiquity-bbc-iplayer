@@ -3,7 +3,7 @@
   http://github.com/elson/ubiquity-bbc-iplayer/wikis/command-feed
   
   Version:
-    0.2
+    0.2.1
   
   Usage:
     watch (tv programme name)
@@ -17,7 +17,6 @@
     Some aspects based on Gray Nortons Freebase previews
     http://graynorton.com/ubiquity/freebase-nouns.html
 */
-
 
 const TYPE_TV = "tv";
 const TYPE_RADIO = "radio";
@@ -227,11 +226,11 @@ var Broadcast = function () {
 
     /**
       @function Broadcast.check
-      Returns true if a broadcast is available and title matches query.what
+      Returns true if a broadcast is available and title matches query.regexp
     */
     check: function ( broadcast, query ) {
-      return !!broadcast.programme.media &&
-        broadcast.programme.display_titles.title.match(query.what, "i");
+      return !!broadcast.programme.media && 
+          query.expr.test(broadcast.programme.display_titles.title);
     },
     
     /**
@@ -260,19 +259,20 @@ var Query = function () {
   
     /**
       @function create
-      Returns a query object containing what, type, station, genre, date
+      Returns a query object containing text, expr, type, station, genre, date
     */
-    create: function ( expr, opts ) {
+    create: function ( text, opts ) {
     
       var query = jQuery.extend({
-        what: expr, 
+        "text": text, 
+        expr: new RegExp(text, "i"),
         type: TYPE_TV, 
         station: "",
         genre: "", 
         date: ""
         }, opts 
       );
-      var words = expr.split(" ");
+      var words = text.split(" ");
       var startsWith = false;
 
       words.forEach( function( word, index ) {
@@ -282,7 +282,10 @@ var Query = function () {
         }
       });
 
-      if ( startsWith ) { query.what = words.slice(1).join(" ") }
+      if ( startsWith ) { 
+          query.text = words.slice(1).join(" ");
+          query.expr = new RegExp(query.text, "i");
+      }
 
       return query;
     }
@@ -326,7 +329,6 @@ var UbiqHelper = function () {
       return {
         _name: name,
         suggest: function( text, html, callback ) {
-
           var query, title;
 
           if ( text.length < 2) { return []; }
@@ -409,4 +411,3 @@ UbiqHelper.createCommand(
   "Listen to a recent Radio programme on BBC iPlayer", {
   "radio programme": noun_type_radio_progs
 });
-
