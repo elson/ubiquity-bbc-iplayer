@@ -3,7 +3,7 @@
   http://github.com/elson/ubiquity-bbc-iplayer/wikis/command-feed
   
   Version:
-    0.2.1
+    0.2.2
   
   Usage:
     watch (tv programme name)
@@ -330,8 +330,11 @@ var UbiqHelper = function () {
         _name: name,
         suggest: function( text, html, callback ) {
           var query, title;
+          
+          // workaround until http://ubiquity.mozilla.com/trac/ticket/619 is fixed
+          var def = CmdUtils.makeSugg("loading...");
 
-          if ( text.length < 2) { return []; }
+          if ( text.length < 2) { return [def]; }
 
           slowly.please( function() {
             query = Query.create(text, { type: tv_or_radio });
@@ -341,7 +344,7 @@ var UbiqHelper = function () {
             });
           });
 
-          return [];
+          return [def];
         }
       };
     },
