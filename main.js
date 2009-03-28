@@ -3,13 +3,13 @@
   http://github.com/elson/ubiquity-bbc-iplayer/wikis/command-feed
   
   Version:
-    0.2.2
+    0.2.3
   
   Usage:
     watch (tv programme name)
     listen (radio programme name)
     
-    You can filter programmes by tpying "todays" or "yesterdays" before the 
+    You can filter programmes by typing "todays" or "yesterdays" before the 
     programme name. This is quite basic for now but will be improved in 
     future versions.
   
@@ -332,9 +332,9 @@ var UbiqHelper = function () {
           var query, title;
           
           // workaround until http://ubiquity.mozilla.com/trac/ticket/619 is fixed
-          var def = CmdUtils.makeSugg("loading...");
+          var def = [CmdUtils.makeSugg('Loading "' + text + '"...')];
 
-          if ( text.length < 2) { return [def]; }
+          if ( text.length < 2) { return def; }
 
           slowly.please( function() {
             query = Query.create(text, { type: tv_or_radio });
@@ -344,7 +344,7 @@ var UbiqHelper = function () {
             });
           });
 
-          return [def];
+          return def;
         }
       };
     },
@@ -353,13 +353,17 @@ var UbiqHelper = function () {
       @function UbiqHelper.createCommand
       Create a Ubiquity command
     */
-    createCommand: function ( name, description, takes ) {
+    createCommand: function ( name, synonyms, description, takes ) {
 
       CmdUtils.CreateCommand({
         name: name,
+        synonyms: synonyms,
         description: description,
         homepage: "http://github.com/elson/ubiquity-bbc-iplayer/wikis/home",
         author: { name: "Stephen Elson", email: "stephen.elson@gmail.com" },
+        help: 'You can filter programmes by typing "todays" or "yesterdays" ' +
+          'before the programme name.<br /><br />Note that BBC iPlayer is ' + 
+          'only available in the UK.',
         icon: "http://www.bbc.co.uk/favicon.ico",
         license: "MIT",
         takes: takes,
@@ -404,6 +408,7 @@ var noun_type_radio_progs = UbiqHelper.createNoun(
 // Watch BBC TV programmes
 UbiqHelper.createCommand(
   "watch",
+  ["tv", "iplayer"],
   "Watch a recent TV programme on BBC iPlayer", {
   "tv programme": noun_type_tv_progs
 });
@@ -411,6 +416,8 @@ UbiqHelper.createCommand(
 // Listen to BBC Radio programmes
 UbiqHelper.createCommand(
   "listen",
+  ["radio"],
   "Listen to a recent Radio programme on BBC iPlayer", {
   "radio programme": noun_type_radio_progs
 });
+
