@@ -353,11 +353,10 @@ var UbiqHelper = function () {
       @function UbiqHelper.createCommand
       Create a Ubiquity command
     */
-    createCommand: function ( name, synonyms, description, takes ) {
+    createCommand: function ( names, description, arguments ) {
 
       CmdUtils.CreateCommand({
-        name: name,
-        synonyms: synonyms,
+        names: names,
         description: description,
         homepage: "http://github.com/elson/ubiquity-bbc-iplayer/wikis/home",
         author: { name: "Stephen Elson", email: "stephen.elson@gmail.com" },
@@ -366,10 +365,12 @@ var UbiqHelper = function () {
           'only available in the UK.',
         icon: "http://www.bbc.co.uk/favicon.ico",
         license: "MIT",
-        takes: takes,
+        arguments: arguments,
 
-        preview: function( el, item ) {
+        preview: function( el, args ) {
           if (!el) { return; }
+
+	  var item = args.object;
 
           el.innerHTML = description;
           if (item && item.data) {
@@ -377,9 +378,9 @@ var UbiqHelper = function () {
           }
         },
 
-        execute: function( item ) {
+        execute: function( args ) {
           Utils.openUrlInBrowser("http://www.bbc.co.uk/iplayer/episode/" + 
-            item.data.programme.pid);
+            args.object.data.programme.pid);
         }
       });
       
@@ -407,17 +408,14 @@ var noun_type_radio_progs = UbiqHelper.createNoun(
 
 // Watch BBC TV programmes
 UbiqHelper.createCommand(
-  "watch",
-  ["tv", "iplayer"],
-  "Watch a recent TV programme on BBC iPlayer", {
-  "tv programme": noun_type_tv_progs
-});
+  ["watch", "tv", "iplayer"],
+  "Watch a recent TV programme on BBC iPlayer",
+  [{ role: "object", nountype: noun_type_tv_progs, label: "tv programme" }]
+);
 
 // Listen to BBC Radio programmes
 UbiqHelper.createCommand(
-  "listen",
-  ["radio"],
-  "Listen to a recent Radio programme on BBC iPlayer", {
-  "radio programme": noun_type_radio_progs
-});
-
+  ["listen", "radio"],
+  "Listen to a recent Radio programme on BBC iPlayer",
+  [{ role: "object", nountype: noun_type_radio_progs, label: "radio programme" }]
+);
