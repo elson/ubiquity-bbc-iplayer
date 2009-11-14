@@ -323,28 +323,25 @@ var UbiqHelper = function () {
       Create a Ubiquity noun type
     */
     createNoun: function ( name, tv_or_radio ) {
-      
-      var slowly = new Slow();
 
       return {
         _name: name,
         suggest: function( text, html, callback ) {
           var query, title;
-          
+          var suggestions = [];
+
           // workaround until http://ubiquity.mozilla.com/trac/ticket/619 is fixed
           var def = [CmdUtils.makeSugg('Loading "' + text + '"...')];
 
           if ( text.length < 2) { return def; }
 
-          slowly.please( function() {
-            query = Query.create(text, { type: tv_or_radio });
-            Schedule.find( query, function( broadcast ) {
-              title = broadcast.programme.display_titles.title;
-              callback( CmdUtils.makeSugg( title, title, broadcast ) );
-            });
+          query = Query.create(text, { type: tv_or_radio });
+          Schedule.find( query, function( broadcast ) {
+            title = broadcast.programme.display_titles.title;
+            suggestions.push( CmdUtils.makeSugg( title, title, broadcast ) );
           });
 
-          return def;
+          return suggestions;
         }
       };
     },
